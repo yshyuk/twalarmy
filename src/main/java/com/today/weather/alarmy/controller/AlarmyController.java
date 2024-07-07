@@ -22,7 +22,7 @@ public class AlarmyController {
     public WeatherResult getWeatherInfo(@RequestParam(required = true) double lat,
                                         @RequestParam(required = true) double lng){
 
-        return new WeatherResult(alarmyService.getWeatherInfo);
+        return new WeatherResult(alarmyService.getWeatherInfo(lat,lng));
     }
 
 }
