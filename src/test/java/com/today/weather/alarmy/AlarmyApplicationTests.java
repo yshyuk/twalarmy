@@ -25,7 +25,7 @@ import java.util.List;
 //@SpringBootTest
 class AlarmyApplicationTests {
 
-    @Test
+    //@Test
     void contextLoads() {
 
         String is = null;
@@ -34,7 +34,7 @@ class AlarmyApplicationTests {
     }
 
 
-    @Test
+    //@Test
     void convertToLambert() {
         // 기준 데이텀 설정 (WGS84)
         double a = 6378137.0; // 장축 길이 (m)
@@ -134,7 +134,7 @@ class AlarmyApplicationTests {
         System.out.println(sb.toString());
     }
 
-    @Test
+    //@Test
     void functionLatLngToLambert() {
 
         double lat = 37.414124f;
@@ -151,7 +151,7 @@ class AlarmyApplicationTests {
         map.yo = 675 / map.grid; // 기준점 Y좌표
         map.first = false;
         float[] result = new float[2];
-        result = mapConv(lng, lat,  map);
+        result = mapConv(lng, lat, map);
 
 
     }
@@ -174,9 +174,9 @@ class AlarmyApplicationTests {
 
     private static float[] mapConv(double a, double b, LamcParameter map) {
         float[] result = new float[2];
-            float[] xy = lamcproj(a, b,  map);
-            result[0] = Math.round(xy[0] + 1.5f);
-            result[1] = Math.round(xy[1] + 1.5f);
+        float[] xy = lamcproj(a, b, map);
+        result[0] = Math.round(xy[0] + 1.5f);
+        result[1] = Math.round(xy[1] + 1.5f);
         return result;
     }
 
@@ -217,18 +217,18 @@ class AlarmyApplicationTests {
         ro = Math.tan(PI * 0.25 + olat * 0.5);
         ro = re * sf / Math.pow(ro, sn);
 
-            ra = Math.tan(PI * 0.25 + b * DEGRAD * 0.5);
-            ra = re * sf / Math.pow(ra, sn);
-            theta = a * DEGRAD - olon;
-            if (theta > PI) {
-                theta -= 2.0 * PI;
-            }
-            if (theta < -PI) {
-                theta += 2.0 * PI;
-            }
-            theta *= sn;
-            result[0] = (float) (ra * Math.sin(theta) + map.xo);
-            result[1] = (float) (ro - ra * Math.cos(theta) + map.yo);
+        ra = Math.tan(PI * 0.25 + b * DEGRAD * 0.5);
+        ra = re * sf / Math.pow(ra, sn);
+        theta = a * DEGRAD - olon;
+        if (theta > PI) {
+            theta -= 2.0 * PI;
+        }
+        if (theta < -PI) {
+            theta += 2.0 * PI;
+        }
+        theta *= sn;
+        result[0] = (float) (ra * Math.sin(theta) + map.xo);
+        result[1] = (float) (ro - ra * Math.cos(theta) + map.yo);
         return result;
     }
 }

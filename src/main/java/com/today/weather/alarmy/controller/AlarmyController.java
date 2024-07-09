@@ -18,7 +18,7 @@ public class AlarmyController {
     @Autowired
     AlarmyService alarmyService;
 
-    @GetMapping(value = "getWeatherInfo")
+    @GetMapping(value = "/getWeatherInfo")
     public WeatherResult getWeatherInfo(@RequestParam(required = true) double lat,
                                         @RequestParam(required = true) double lng){
 

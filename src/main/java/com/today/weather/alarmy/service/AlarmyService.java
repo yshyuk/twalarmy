@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.today.weather.alarmy.dto.WeatherDto;
+import com.today.weather.alarmy.model.ResponseBodyModel;
 import com.today.weather.alarmy.model.ResponseModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +56,7 @@ public class AlarmyService {
         result[1] = Math.round(xy[1] + 1.5f);
         return result;
     }
+
     //TODO : 주석 달기
     private static float[] lamcproj(double a, double b, LamcParameter map) {
         double PI = Math.PI;
@@ -103,19 +105,19 @@ public class AlarmyService {
             theta += 2.0 * PI;
         }
         theta *= sn;
-        result[0] = (float)(ra * Math.sin(theta) + map.xo);
-        result[1] = (float)(ro - ra * Math.cos(theta) + map.yo);
+        result[0] = (float) (ra * Math.sin(theta) + map.xo);
+        result[1] = (float) (ro - ra * Math.cos(theta) + map.yo);
         return result;
     }
 
-    public WeatherDto getWeatherInfo(double latitude, double longitude) throws IOException {
+    public WeatherDto getWeatherInfo(double latitude, double longitude) throws Exception{
 
         LocalDateTime local = LocalDateTime.now().minusDays(1);
         String nowString = local.format(DateTimeFormatter.ofPattern("YYYYMMdd"));
 
         //TODO : static 객체 캐시화 하기?
 
-        float[] XY = new float[2];
+
 
         LamcParameter map = new LamcParameter();
         map.Re = 6371.00877f; // 지도반경
@@ -127,59 +129,87 @@ public class AlarmyService {
         map.xo = 210 / map.grid; // 기준점 X좌표
         map.yo = 675 / map.grid; // 기준점 Y좌표
         map.first = false;
+        float[] XY = mapConv(latitude, longitude, map);
 
-        XY = mapConv(latitude, longitude,map);
+            StringBuilder urlBuilder = new StringBuilder(
+                "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst");
+            urlBuilder.append(
+                "?" + URLEncoder.encode("serviceKey", "UTF-8") + serviceKey); /*Service Key*/
+            urlBuilder.append(
+                "&" + URLEncoder.encode("pageNo", "UTF-8") + "=" + URLEncoder.encode("1",
+                    "UTF-8")); /*페이지번호*/
+            urlBuilder.append(
+                "&" + URLEncoder.encode("numOfRows", "UTF-8") + "=" + URLEncoder.encode("1000",
+                    "UTF-8")); /*한 페이지 결과 수*/
+            urlBuilder.append(
+                "&" + URLEncoder.encode("dataType", "UTF-8") + "=" + URLEncoder.encode(JSON,
+                    "UTF-8")); /*요청자료형식(XML/JSON) Default: XML*/
+            urlBuilder.append(
+                "&" + URLEncoder.encode("base_date", "UTF-8") + "=" + URLEncoder.encode(nowString,
+                    "UTF-8")); /*‘21년 6월 28일 발표*/
+            urlBuilder.append(
+                "&" + URLEncoder.encode("base_time", "UTF-8") + "=" + URLEncoder.encode("0600",
+                    "UTF-8")); /*06시 발표(정시단위) */
+            urlBuilder.append(
+                "&" + URLEncoder.encode("nx", "UTF-8") + "=" + URLEncoder.encode(
+                    Float.toString(XY[0]),
+                    "UTF-8")); /*예보지점의 X 좌표값*/
+            urlBuilder.append(
+                "&" + URLEncoder.encode("ny", "UTF-8") + "=" + URLEncoder.encode(
+                    Float.toString(XY[1]),
+                    "UTF-8")); /*예보지점의 Y 좌표값*/
+            URL url = new URL(urlBuilder.toString());
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Content-type", "application/json");
+            System.out.println("Response code: " + conn.getResponseCode());
+            Object obj = conn.getInputStream();
+            BufferedReader rd;
+            if (conn.getResponseCode() >= 200 && conn.getResponseCode() <= 300) {
+                rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            } else {
+                rd = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+            }
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = rd.readLine()) != null) {
+                sb.append(line);
+            }
 
-        StringBuilder urlBuilder = new StringBuilder(
-            "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst");
-        urlBuilder.append(
-            "?" + URLEncoder.encode("serviceKey", "UTF-8") + serviceKey); /*Service Key*/
-        urlBuilder.append("&" + URLEncoder.encode("pageNo", "UTF-8") + "=" + URLEncoder.encode("1",
-            "UTF-8")); /*페이지번호*/
-        urlBuilder.append(
-            "&" + URLEncoder.encode("numOfRows", "UTF-8") + "=" + URLEncoder.encode("1000",
-                "UTF-8")); /*한 페이지 결과 수*/
-        urlBuilder.append(
-            "&" + URLEncoder.encode("dataType", "UTF-8") + "=" + URLEncoder.encode(JSON,
-                "UTF-8")); /*요청자료형식(XML/JSON) Default: XML*/
-        urlBuilder.append(
-            "&" + URLEncoder.encode("base_date", "UTF-8") + "=" + URLEncoder.encode(nowString,
-                "UTF-8")); /*‘21년 6월 28일 발표*/
-        urlBuilder.append(
-            "&" + URLEncoder.encode("base_time", "UTF-8") + "=" + URLEncoder.encode("0600",
-                "UTF-8")); /*06시 발표(정시단위) */
-        urlBuilder.append("&" + URLEncoder.encode("nx", "UTF-8") + "=" + URLEncoder.encode(Float.toString(XY[0]),
-            "UTF-8")); /*예보지점의 X 좌표값*/
-        urlBuilder.append("&" + URLEncoder.encode("ny", "UTF-8") + "=" + URLEncoder.encode(Float.toString(XY[1]),
-            "UTF-8")); /*예보지점의 Y 좌표값*/
-        URL url = new URL(urlBuilder.toString());
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-        conn.setRequestProperty("Content-type", "application/json");
-        System.out.println("Response code: " + conn.getResponseCode());
-        Object obj = conn.getInputStream();
-        BufferedReader rd;
-        if (conn.getResponseCode() >= 200 && conn.getResponseCode() <= 300) {
-            rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-        } else {
-            rd = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
-        }
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while ((line = rd.readLine()) != null) {
-            sb.append(line);
-        }
+            JsonElement item = ((JsonObject) JsonParser.parseString((sb.toString()))).get(
+                "response");
 
-        JsonElement item = ((JsonObject) JsonParser.parseString((sb.toString()))).get("response");
+            ResponseModel body = new Gson().fromJson(item.toString(), ResponseModel.class);
 
-        ResponseModel body = new Gson().fromJson(item.toString(), ResponseModel.class);
+            rd.close();
+            conn.disconnect();
 
-        rd.close();
-        conn.disconnect();
 
-        return null;
+        return body;
     }
 
+
+
+    public WeatherDto convertResponseToDto(ResponseBodyModel body){
+        WeatherDto retval = new WeatherDto();
+
+        //TODO : getNow 하는 함수 만들 것
+        retval.setDate(null);
+
+        //TODO : itemsModel List를 key,객체맵으로 저장하게 하고, 저장된 애들 key 값으로 꺼내서 weatherDto에 저장하도록 하기
+        retval.setCloudStatus(null);
+        retval.setPrecipitation(null);
+        retval.setTemperature(null);
+        retval.setPrecipProbability(null);
+        retval.setCloudStatus(null);
+        retval.setFineDustConcentration(null);
+        retval.setUltraFineDustConcentration(null);
+
+        return retval;
+
+
+
+    }
 
     public double[] convertToLambert(double latitude, double longitude) {
         // 기준 데이텀 설정 (WGS84)
