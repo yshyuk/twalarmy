@@ -6,8 +6,8 @@ public class WeatherResult {
 
     public Object object;
 
-    public WeatherResult(Object object){
-        if(object != null)
-            object = this.object;
+    public WeatherResult(Object data){
+        if(data != null)
+            this.object = data;
     }
 }

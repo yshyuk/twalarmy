@@ -78,7 +78,7 @@ class AlarmyApplicationTests {
         Timestamp time = new Timestamp(System.currentTimeMillis());
         SimpleDateFormat date = new SimpleDateFormat("YYYYMMdd");
         date.format(time);
-        LocalDateTime local = LocalDateTime.now().minusDays(1);
+        LocalDateTime local = LocalDateTime.now();
         String nowString = local.format(DateTimeFormatter.ofPattern("YYYYMMdd"));
 
         StringBuilder urlBuilder = new StringBuilder(
@@ -230,6 +230,11 @@ class AlarmyApplicationTests {
         result[0] = (float) (ra * Math.sin(theta) + map.xo);
         result[1] = (float) (ro - ra * Math.cos(theta) + map.yo);
         return result;
+    }
+
+    @Test
+    void proxyTest(){
+
     }
 }
 
