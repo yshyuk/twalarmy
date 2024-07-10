@@ -81,6 +81,11 @@ class AlarmyApplicationTests {
         LocalDateTime local = LocalDateTime.now();
         String nowString = local.format(DateTimeFormatter.ofPattern("YYYYMMdd"));
 
+//        ResponseModel bodyProxy = weatherForcast.getUltraSrtNcst(
+//                "=Qs6ElrLr%2F%2FyGKLhIDuOdqq7KIBMukuCW4f6OxBNL931QBZqcomi1K6HckVeN0T5%2BGv6%2FyjHud4wKym0i30Vf3Q%3D%3D","200","1","JSON",nowString,"0600",XY[0],XY[1]
+//
+//        );
+
         StringBuilder urlBuilder = new StringBuilder(
             "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst"); /*URL*/
         urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8")

@@ -20,11 +20,12 @@ public class AlarmyController {
     @Autowired
     AlarmyService alarmyService;
 
-    @GetMapping(value = "/getWeatherInfo")
-    public WeatherResult getWeatherInfo(@RequestParam(required = true) double lat,
-        @RequestParam(required = true) double lng) throws Exception {
 
-        return new WeatherResult(alarmyService.getWeatherInfo(lat, lng));
+    @GetMapping(value = "/getWeatherInfo")
+    public WeatherResult getWeatherInfo(@RequestParam(required = true) double lat, @RequestParam(required = true) double lng)
+            throws Exception {
+
+        return new WeatherResult(alarmyService.getWeatherInfoUseProxy(lat, lng));
     }
 
 }
