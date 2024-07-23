@@ -1,9 +1,15 @@
 package com.today.weather.alarmy;
 
 import com.google.gson.*;
+import com.today.weather.alarmy.Utility.Utility;
+import com.today.weather.alarmy.dto.WeatherResponseDto;
 import com.today.weather.alarmy.model.ResponseBodyModel;
+import com.today.weather.alarmy.model.ResponseItemModel;
+import com.today.weather.alarmy.model.ResponseItemsModel;
 import com.today.weather.alarmy.model.ResponseModel;
 import com.today.weather.alarmy.service.AlarmyService;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -134,9 +140,35 @@ class AlarmyApplicationTests {
 
         //TODO : 객체 다루는거 끝남. 이제 해야 할건, 객체를 가지고 가공해서 보여주기
 
+        WeatherResponseDto response = convertResponseToDto(body.getBody());
         rd.close();
         conn.disconnect();
         System.out.println(sb.toString());
+    }
+
+    //TODO : 객체 다루기 테스트 하기.
+    public WeatherResponseDto convertResponseToDto(ResponseBodyModel body) {
+        WeatherResponseDto retval = new WeatherResponseDto();
+
+        retval.setDate(Utility.getNow());
+
+        Map<String, ResponseItemModel> map = new HashMap<>();
+
+        for(ResponseItemModel item :body.getItems().getItem()){
+            map.put(item.getCategory(), item);
+        }
+
+        //TODO : itemsModel List를 key,객체맵으로 저장하게 하고, 저장된 애들 key 값으로 꺼내서 weatherDto에 저장하도록 하기
+        retval.setCloudStatus(map.get());
+        retval.setPrecipitation(null);
+        retval.setTemperature(null);
+        retval.setPrecipProbability(null);
+        retval.setCloudStatus(null);
+        retval.setFineDustConcentration(null);
+        retval.setUltraFineDustConcentration(null);
+
+        return retval;
+
     }
 
     //@Test

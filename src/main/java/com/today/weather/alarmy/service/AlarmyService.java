@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.today.weather.alarmy.Utility.Utility;
 import com.today.weather.alarmy.model.ResponseBodyModel;
 import com.today.weather.alarmy.dto.WeatherResponseDto;
 import com.today.weather.alarmy.model.ResponseModel;
@@ -284,7 +285,7 @@ public class AlarmyService {
         WeatherResponseDto retval = new WeatherResponseDto();
 
         //TODO : getNow 하는 함수 만들 것
-        retval.setDate(null);
+        retval.setDate(Utility.getNow());
 
         //TODO : itemsModel List를 key,객체맵으로 저장하게 하고, 저장된 애들 key 값으로 꺼내서 weatherDto에 저장하도록 하기
         retval.setCloudStatus(null);
