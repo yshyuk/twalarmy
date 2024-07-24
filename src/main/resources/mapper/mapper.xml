@@ -2,12 +2,23 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.today.weather.alarmy.dao.AlarmyDao">
 
-    <select id ="readCodeList">
+  <select id ="readCodeList" resultType="com.today.weather.alarmy.model.CodeModel">
+      select
+          ct.code
+          , ct.value
+      from
+          code_tbl as ct
+  </select>
+
+  <select id="readCode" parameterType="string" resultType="com.today.weather.alarmy.model.CodeModel">
         select
-            *
+            ct.code
+            , ct.value
         from
-            code_tbl
-    </select>
+            code_tbl as ct
+        where ct.code = #{code}
+
+  </select>
 
 
 </mapper>
