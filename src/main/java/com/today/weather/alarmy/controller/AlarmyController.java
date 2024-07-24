@@ -28,4 +28,9 @@ public class AlarmyController {
         return new WeatherResult(alarmyService.getWeatherInfoUseProxy(lat, lng));
     }
 
+    @GetMapping(value ="/readCodeList")
+    public WeatherResult readCodeList(){
+        return new WeatherResult(alarmyService.readCodeList());
+    }
+
 }

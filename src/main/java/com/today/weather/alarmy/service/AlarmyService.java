@@ -6,6 +6,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.today.weather.alarmy.Utility.Utility;
+import com.today.weather.alarmy.dao.AlarmyDao;
+import com.today.weather.alarmy.model.CodeModel;
 import com.today.weather.alarmy.model.ResponseBodyModel;
 import com.today.weather.alarmy.dto.WeatherResponseDto;
 import com.today.weather.alarmy.model.ResponseModel;
@@ -25,14 +27,18 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 
 @Service
 public class AlarmyService {
 
     @Autowired
-    private         IWeatherForcast weatherForcast;
-    protected final Logger          logger = LoggerFactory.getLogger(this.getClass());
+    IWeatherForcast weatherForcast;
+
+    @Autowired
+    AlarmyDao alarmyDao;
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static final int NX = 149; // X축 격자점 수
     private static final int NY = 253; // Y축 격자점 수
@@ -248,9 +254,7 @@ public class AlarmyService {
                                   "=" +
                                   URLEncoder.encode(Double.toString(XY[1]), "UTF-8")); /*예보지점의 Y 좌표값*/
 
-        ResponseModel bodyProxy = weatherForcast.getUltraSrtNcst(serviceKey, "200", "1", "JSON", nowString, "0600", XY[0], XY[1]
-
-        );
+        //        ResponseModel bodyProxy = weatherForcast.getUltraSrtNcst(serviceKey, "200", "1", "JSON", nowString, "0600", XY[0], XY[1]);
 
         URL url = new URL(urlBuilder.toString());
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -280,25 +284,24 @@ public class AlarmyService {
         return null;
     }
 
-
-    public WeatherResponseDto convertResponseToDto(ResponseBodyModel body) {
-        WeatherResponseDto retval = new WeatherResponseDto();
-
-        //TODO : getNow 하는 함수 만들 것
-        retval.setDate(Utility.getNow());
-
-        //TODO : itemsModel List를 key,객체맵으로 저장하게 하고, 저장된 애들 key 값으로 꺼내서 weatherDto에 저장하도록 하기
-        retval.setCloudStatus(null);
-        retval.setPrecipitation(null);
-        retval.setTemperature(null);
-        retval.setPrecipProbability(null);
-        retval.setCloudStatus(null);
-        retval.setFineDustConcentration(null);
-        retval.setUltraFineDustConcentration(null);
-
-        return retval;
-
-    }
+    //    public WeatherResponseDto convertResponseToDto(ResponseBodyModel body) {
+    //        WeatherResponseDto retval = new WeatherResponseDto();
+    //
+    //        //TODO : getNow 하는 함수 만들 것
+    //        retval.setDate(Utility.getNow());
+    //
+    //        //TODO : itemsModel List를 key,객체맵으로 저장하게 하고, 저장된 애들 key 값으로 꺼내서 weatherDto에 저장하도록 하기
+    //        retval.setCloudStatus(null);
+    //        retval.setPrecipitation(null);
+    //        retval.setTemperature(null);
+    //        retval.setPrecipProbability(null);
+    //        retval.setCloudStatus(null);
+    //        retval.setFineDustConcentration(null);
+    //        retval.setUltraFineDustConcentration(null);
+    //
+    //        return retval;
+    //
+    //    }
 
 
     public double[] convertToLambert(double latitude, double longitude) {
@@ -324,6 +327,11 @@ public class AlarmyService {
                                           Math.sqrt(e2) / 2));
 
         return new double[] { x, y };
+    }
+
+
+    public List<CodeModel> readCodeList() {
+        return alarmyDao.readCodeList();
     }
 
 }
