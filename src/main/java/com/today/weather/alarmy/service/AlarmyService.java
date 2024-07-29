@@ -13,6 +13,7 @@ import com.today.weather.alarmy.dto.WeatherResponseDto;
 import com.today.weather.alarmy.model.ResponseModel;
 import com.today.weather.alarmy.proxy.IWeatherForcast;
 import feign.Response;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,9 @@ import java.util.List;
 
 
 @Service
+@Slf4j
 public class AlarmyService {
+
 
     @Autowired
     IWeatherForcast weatherForcast;
@@ -39,9 +42,6 @@ public class AlarmyService {
     @Autowired
     AlarmyDao alarmyDao;
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    private static final int NX = 149; // X축 격자점 수
-    private static final int NY = 253; // Y축 격자점 수
 
     public static final String JSON = "JSON";
 
@@ -65,9 +65,9 @@ public class AlarmyService {
 
 
     //TODO : 주석 달기
-    private double[] mapConv(double a, double b, LamcParameter map) {
-        double[] result = new double[2];
-        double[] xy = lamcproj(a, b, map);
+    private float[] mapConv(double a, double b, LamcParameter map) {
+        float[] result = new float[2];
+        float[] xy = lamcproj(a, b, map);
         result[0] = Math.round(xy[0] + 1.5f);
         result[1] = Math.round(xy[1] + 1.5f);
         return result;
@@ -75,13 +75,13 @@ public class AlarmyService {
 
 
     //TODO : 주석 달기
-    private static double[] lamcproj(double a, double b, LamcParameter map) {
+    private static float[] lamcproj(double a, double b, LamcParameter map) {
         double PI = Math.PI;
         double DEGRAD = PI / 180.0;
         double RADDEG = 180.0 / PI;
         double re, olon, olat, sn, sf, ro;
         double slat1, slat2, alon, alat, xn, yn, ra, theta;
-        double[] result = new double[2];
+        float[] result = new float[2];
 
         if (!map.first) {
             re = map.Re / map.grid;
@@ -122,8 +122,8 @@ public class AlarmyService {
             theta += 2.0 * PI;
         }
         theta *= sn;
-        result[0] = (ra * Math.sin(theta) + map.xo);
-        result[1] = (ro - ra * Math.cos(theta) + map.yo);
+        result[0] = (float)(ra * Math.sin(theta) + map.xo);
+        result[1] = (float)(ro - ra * Math.cos(theta) + map.yo);
         return result;
     }
 
@@ -207,7 +207,7 @@ public class AlarmyService {
     //            }
 
 
-    public WeatherResponseDto getWeatherInfoUseProxy(double latitude, double longitude) throws Exception {
+    public WeatherResponseDto getWeatherInfoUseProxy(double longitude, double latitude) throws Exception {
 
         LocalDateTime local = LocalDateTime.now().minusHours(6);
         String nowString = local.format(DateTimeFormatter.ofPattern("YYYYMMdd"));
@@ -224,7 +224,7 @@ public class AlarmyService {
         map.xo = 210 / map.grid; // 기준점 X좌표
         map.yo = 675 / map.grid; // 기준점 Y좌표
         map.first = false;
-        double[] XY = mapConv(latitude, longitude, map);
+        float[] XY = mapConv(longitude,latitude , map);
 
         StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst");
         urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8") + serviceKey); /*Service Key*/
@@ -331,6 +331,7 @@ public class AlarmyService {
 
 
     public List<CodeModel> readCodeList() {
+        logger.info("readCodeList : ");
         return alarmyDao.readCodeList();
     }
 

@@ -25,7 +25,7 @@ public class AlarmyController {
     public WeatherResult getWeatherInfo(@RequestParam(required = true) double lat, @RequestParam(required = true) double lng)
             throws Exception {
 
-        return new WeatherResult(alarmyService.getWeatherInfoUseProxy(lat, lng));
+        return new WeatherResult(alarmyService.getWeatherInfoUseProxy((float)lng, (float)lat));
     }
 
     @GetMapping(value ="/readCodeList")
