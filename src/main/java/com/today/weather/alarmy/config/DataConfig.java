@@ -19,7 +19,7 @@ import javax.sql.DataSource;
 
 @Configuration
 @EnableTransactionManagement
-@MapperScan(basePackages = "com.today.weather.alarmy")
+@MapperScan(basePackages = "com.today.weather.alarmy.dao")
 public class DataConfig {
 
     private static final String CONFIG_MYBATIS = "config/mybatis-config.xml";

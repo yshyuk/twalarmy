@@ -10,16 +10,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 
 @FeignClient(
-        value = "weatherForcast", url = "${external.data.url}", configuration = FeignConfig.class)
+        value = "IWeatherForcast", url = "${external.data.url}", configuration = FeignConfig.class)
 public interface IWeatherForcast {
 
     @GetMapping(value = "/getUltraSrtNcst", produces = MediaType.APPLICATION_JSON_VALUE)
-    ResponseModel getUltraSrtNcst(@RequestParam(name = "key") String key,
+    ResponseModel getUltraSrtNcst(@RequestParam(name = "serviceKey") String key,
                                   @RequestParam(name = "numOfRows") String rows,
                                   @RequestParam(name = "pageNo") String page,
                                   @RequestParam(name = "dataType") String dataType,
                                   @RequestParam(name = "base_date") String date,
                                   @RequestParam(name = "base_time") String time,
-                                  @RequestParam(name = "nx") double nx,
-                                  @RequestParam(name = "ny") double ny) throws Exception;
+                                  @RequestParam(name = "nx") int nx,
+                                  @RequestParam(name = "ny") int ny) throws Exception;
 }
