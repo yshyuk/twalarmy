@@ -20,5 +20,22 @@
 
   </select>
 
+    <update id="upsertWeatherForcast" parameterType="com.today.weather.alarmy.model.WeatherModel">
+        insert into weather_tbl
+            (key, wtr_code, wtr_key, wtr_value, nx, ny, saved_ts)
+        values
+            (#{key},#{weatherCode},#{weatherKey},#{weatherValue},#{nx},#{ny},#{savedTs})
+        on conflict(key) do
+        update
+        <set>
+            , wtr_code = excluded.wtr_code
+            , wtr_key = excluded.wtr_key
+            , wtr_value = excluded.wtr_value
+            , nx = excluded.nx
+            , ny = excluded.ny
+            , saved_ts = excluded.saved_ts
+        </set>
+    </update>
+
 
 </mapper>

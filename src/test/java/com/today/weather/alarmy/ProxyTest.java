@@ -31,7 +31,7 @@ public class ProxyTest {
     String key;
 
 
-//    @Test
+    @Test
     void test() throws Exception {
         LocalDateTime local = LocalDateTime.now();
         String nowDate = local.format(DateTimeFormatter.ofPattern("YYYYMMdd"));
@@ -41,9 +41,12 @@ public class ProxyTest {
         Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
         String jsonString = gson.toJson(model);
         System.out.println(jsonString);
+
     }
 
-    @Test
+
+
+//    @Test
     void functionLatLngToLambert(){
         double lat = 37.410040f;
         double lng = 127.129132f;

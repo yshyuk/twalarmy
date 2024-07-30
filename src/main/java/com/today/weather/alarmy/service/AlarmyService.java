@@ -278,6 +278,8 @@ public class AlarmyService {
 
         ResponseModel body = new Gson().fromJson(item.toString(), ResponseModel.class);
 
+
+
         rd.close();
         conn.disconnect();
 
@@ -327,6 +329,10 @@ public class AlarmyService {
                                           Math.sqrt(e2) / 2));
 
         return new double[] { x, y };
+    }
+
+    public void insertWeatherForcast(ResponseModel model){
+
     }
 
 
