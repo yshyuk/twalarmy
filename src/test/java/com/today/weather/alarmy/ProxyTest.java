@@ -3,6 +3,10 @@ package com.today.weather.alarmy;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.today.weather.alarmy.Utility.Utility;
+import com.today.weather.alarmy.dto.WeatherResponseDto;
+import com.today.weather.alarmy.model.ResponseItemModel;
+import com.today.weather.alarmy.model.ResponseItemsModel;
 import com.today.weather.alarmy.model.ResponseModel;
 import com.today.weather.alarmy.proxy.IWeatherForcast;
 import com.today.weather.alarmy.service.AlarmyService;
@@ -45,9 +49,8 @@ public class ProxyTest {
     }
 
 
-
-//    @Test
-    void functionLatLngToLambert(){
+    //    @Test
+    void functionLatLngToLambert() {
         double lat = 37.410040f;
         double lng = 127.129132f;
 
@@ -64,8 +67,8 @@ public class ProxyTest {
         float[] result = new float[2];
         result = mapConv(lng, lat, map);
 
-        System.out.println("nx : " +result[0]);
-        System.out.println("ny : " +result[1]);
+        System.out.println("nx : " + result[0]);
+        System.out.println("ny : " + result[1]);
     }
 
     static class LamcParameter {
@@ -139,5 +142,36 @@ public class ProxyTest {
         result[0] = (float) (ra * Math.sin(theta) + map.xo);
         result[1] = (float) (ro - ra * Math.cos(theta) + map.yo);
         return result;
+    }
+
+    private WeatherResponseDto convertCodeName(ResponseItemsModel items) {
+
+        WeatherResponseDto response = new WeatherResponseDto();
+        response.setDate(Utility.getNow());
+        for (ResponseItemModel item : items.getItem()) {
+            switch (item.getCategory()) {
+                //강수확률
+                case "POP":
+                    response.setPrecipProbability(item.getObsrValue());
+                    break;
+                //온도
+                case "T1H":
+                    response.setTemperature(item.getObsrValue());
+                    //하늘상태
+                case "SKY":
+                    response.setCloudStatus(item.getObsrValue());
+                    break;
+                //강수량
+                case "PCP":
+                    response.setPrecipitation(item.getObsrValue());
+                    //강수형태
+                    //미세먼지 농도
+                    //초미세먼지 농도
+                default:
+                    break;
+            }
+        }
+        return response;
+
     }
 }
