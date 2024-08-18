@@ -4,6 +4,7 @@ package com.today.weather.alarmy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.today.weather.alarmy.Utility.Utility;
+import com.today.weather.alarmy.common.WeatherResult;
 import com.today.weather.alarmy.dto.WeatherResponseDto;
 import com.today.weather.alarmy.model.ResponseItemModel;
 import com.today.weather.alarmy.model.ResponseItemsModel;
@@ -11,7 +12,9 @@ import com.today.weather.alarmy.model.ResponseModel;
 import com.today.weather.alarmy.proxy.IWeatherForcast;
 import com.today.weather.alarmy.service.AlarmyService;
 import feign.Response;
+import lombok.Builder;
 import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,17 +34,21 @@ public class ProxyTest {
     AlarmyService alarmyService;
 
     @Value(
-            "${external.data.key}")
+        "${external.data.key}")
     String key;
 
 
     @Test
     void test() throws Exception {
-        LocalDateTime local = LocalDateTime.now();
+        LocalDateTime local = LocalDateTime.now().minusHours(1);
         String nowDate = local.format(DateTimeFormatter.ofPattern("YYYYMMdd"));
         String nowTime = local.format(DateTimeFormatter.ofPattern("HHMM"));
 
-        ResponseModel model = weatherForcast.getUltraSrtNcst(key, "200", "1", "JSON", nowDate, nowTime, 63, 123);
+        ResponseModel model = weatherForcast.getUltraSrtNcst(key, "200", "1", "JSON", nowDate,
+            nowTime, 63, 123);
+        ResponseItemsModel items = model.getBody().getItems();
+        WeatherResponseDto result = convertCodeName(items);
+        System.out.println(result.toString());
         Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
         String jsonString = gson.toJson(model);
         System.out.println(jsonString);
@@ -144,7 +151,8 @@ public class ProxyTest {
         return result;
     }
 
-    private WeatherResponseDto convertCodeName(ResponseItemsModel items) {
+
+    public WeatherResponseDto convertCodeName(ResponseItemsModel items) {
 
         WeatherResponseDto response = new WeatherResponseDto();
         response.setDate(Utility.getNow());
@@ -157,6 +165,7 @@ public class ProxyTest {
                 //온도
                 case "T1H":
                     response.setTemperature(item.getObsrValue());
+                    break;
                     //하늘상태
                 case "SKY":
                     response.setCloudStatus(item.getObsrValue());
@@ -164,7 +173,11 @@ public class ProxyTest {
                 //강수량
                 case "PCP":
                     response.setPrecipitation(item.getObsrValue());
+                    break;
                     //강수형태
+                case "PTY":
+                    response.setPrecipForm(item.getObsrValue());
+                    break;
                     //미세먼지 농도
                     //초미세먼지 농도
                 default:

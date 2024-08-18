@@ -29,4 +29,5 @@ public class WeatherResponseDto {
 
     private String ultraFineDustConcentration;
 
+    private String humidity;
 }
