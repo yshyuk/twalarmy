@@ -34,14 +34,17 @@ jobs:
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Create CodeDeploy Deployment
+      id: deploy  # 이 단계에 ID를 추가합니다
       run: |
-        aws deploy create-deployment \
+        DEPLOYMENT_ID=$(aws deploy create-deployment \
           --application-name ${{ env.APPLICATION_NAME }} \
           --deployment-group-name ${{ env.DEPLOYMENT_GROUP }} \
-          --github-location repository=${{ github.repository }},commitId=${{ github.sha }}
+          --github-location repository=${{ github.repository }},commitId=${{ github.sha }} \
+          --output text --query 'deploymentId')
+        echo "deployment-id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
 
     - name: Wait for deployment to complete
       run: |
-        aws deploy wait deployment-successful --deployment-id $DEPLOYMENT_ID
-      env:
-        DEPLOYMENT_ID: ${{ steps.create-deployment.outputs.deployment-id }}
+        aws deploy wait deployment-successful --deployment-id ${{ steps.deploy.outputs.deployment-id }}
+
+
