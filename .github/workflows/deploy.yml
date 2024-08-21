@@ -26,8 +26,17 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
+   - name: List directory contents
+      run: ls -R
+
     - name: Build with Maven
       run: mvn clean package -DskipTests
+      
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: alarmy
+        path: target/alarmy-0.0.1-SNAPSHOT.war
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
