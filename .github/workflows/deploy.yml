@@ -56,4 +56,4 @@ jobs:
         aws deploy create-deployment \
           --application-name ${{ env.APPLICATION_NAME }} \
           --deployment-group-name ${{ env.DEPLOYMENT_GROUP }} \
-          --s3-location bucket=innovate-something-ec2-bucket,bundleType=zip,key=app.zip
+          --github-location repository=${{ github.repository }},commitId=${{ github.sha }}
