@@ -54,6 +54,6 @@ jobs:
     - name: Deploy to EC2
       run: |
         aws deploy create-deployment \
-          --application-name YourCodeDeployApp \
-          --deployment-group-name YourDeploymentGroup \
+          application-name ${{ env.APPLICATION_NAME }} \
+          deployment-group-name ${{ env.DEPLOYMENT_GROUP }} \
           --s3-location bucket=your-s3-bucket,bundleType=zip,key=app.zip
