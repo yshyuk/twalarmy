@@ -58,6 +58,7 @@ jobs:
 
     - name: Deploy to EC2
       run: |
+        ls -R build/libs
         aws s3 cp build/libs/${{env.WAR_FILE}} s3://innovate-something-ec2-bucket/${{env.WAR_FILE}}
         DEPLOYMENT_ID=$(aws deploy create-deployment \
           --application-name ${{ env.APPLICATION_NAME }} \
