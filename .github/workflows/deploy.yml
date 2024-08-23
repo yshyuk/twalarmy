@@ -21,7 +21,8 @@ permissions:
   contents: read
 
 jobs:
-  build:
+
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -39,11 +40,6 @@ jobs:
       with:
         name: app
         path: build/libs/*.war
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
     - name: Download WAR file
       uses: actions/download-artifact@v2
       with:
