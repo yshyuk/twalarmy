@@ -19,61 +19,18 @@ permissions:
 
 jobs:
   deploy:
-    name: Deploy
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-      
-    - name: Set up JDK 17
-      uses: actions/setup-java@v2
-      with:
-        java-version: '17'
-        distribution: 'adopt'
-
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-
-    - name: Build with Gradle
-      run: ./gradlew build -x test
-      
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: alarmy
-        path: target/alarmy-0.0.1-SNAPSHOT.war
-
+    - uses: actions/checkout@v2
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
-
-      
-    - name: Create CodeDeploy Deployment
-      id: deploy  # 이 단계에 ID를 추가합니다
+        aws-region: us-east-1
+    - name: Deploy to EC2
       run: |
-        DEPLOYMENT_ID=$(aws deploy create-deployment \
-          --application-name ${{ env.APPLICATION_NAME }} \
-          --deployment-group-name ${{ env.DEPLOYMENT_GROUP }} \
-          --github-location repository=${{ github.repository }},commitId=${{ github.sha }} \
-          --output text --query 'deploymentId')
-        echo "deployment-id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
-
-    - name: Wait for deployment to complete
-      run: |
-        if ! aws deploy wait deployment-successful --deployment-id ${{ steps.deploy.outputs.deployment-id }}; then
-          echo "Deployment failed. Fetching deployment details..."
-          aws deploy get-deployment --deployment-id ${{ steps.deploy.outputs.deployment-id }}
-          exit 1
-        fi
-
-    - name: Deployment Status
-      if: failure()
-      run: |
-        echo "Deployment failed. Here are the recent events:"
-        aws deploy list-deployment-instances --deployment-id ${{ steps.deploy.outputs.deployment-id }} --query 'instancesList' --output text | xargs -I {} aws deploy get-deployment-instance --deployment-id ${{ steps.deploy.outputs.deployment-id }} --instance-id {}
-
-
+        aws deploy create-deployment \
+          --application-name YourCodeDeployApp \
+          --deployment-group-name YourDeploymentGroup \
+          --github-location repository=${{ github.repository }},commitId=${{ github.sha }}
