@@ -15,6 +15,7 @@ env:
   WAR_FILE: alarmy-0.0.1-SNAPSHOT.war          # war 파일 이름
   ASG_NAME: blue-green-setting                 # auto-scale  그룹
   INSTANCE_NAME: alarmy                        # instance 이름
+  TEMPLATE_NAME: alarmy-template
 
 
 permissions:
@@ -33,13 +34,16 @@ jobs:
         distribution: 'adopt'
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
+      
     - name: Build with Gradle
       run: ./gradlew build
+      
     - name: Upload WAR file
       uses: actions/upload-artifact@v2
       with:
         name: app
         path: build/libs/*.war
+        
     - name: Download WAR file
       uses: actions/download-artifact@v2
       with:
@@ -56,23 +60,27 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: Deploy to EC2
+    - name: Upload WAR file to S3
       run: |
         ls -R build/libs
         aws s3 cp build/libs/alarmy-0.0.1-SNAPSHOT.war s3://innovate-something-ec2-bucket/${{env.WAR_FILE}}
+      
+    - name: Deploy to EC2
+      run: |
         DEPLOYMENT_ID=$(aws deploy create-deployment \
           --application-name ${{ env.APPLICATION_NAME }} \
           --deployment-group-name ${{ env.DEPLOYMENT_GROUP }} \
           --github-location repository=${{ github.repository }},commitId=${{ github.sha }} \
           --s3-location bucket=innovate-something-ec2-bucket,bundleType=zip,key=${{env.WAR_FILE}} \
-          --file-exists-behavior OVERWRITE \
-          --query 'deploymentId' --output text)
+          --output text --query 'deploymentId')
         
-        echo "Deployment ID: $DEPLOYMENT_ID"
-        
+        echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
+
+    - name: Wait for deployment to complete
+      run: |
         aws deploy wait deployment-successful --deployment-id $DEPLOYMENT_ID
 
-    - name: Create AMI and Update Launch Template
+    - name: Create AMI
       run: |
         INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=${{ env.INSTANCE_NAME }}" --query 'Reservations[].Instances[].InstanceId' --output text)
         
@@ -83,7 +91,9 @@ jobs:
           --query 'ImageId' --output text)
         
         echo "Created AMI: $AMI_ID"
-        
+
+    - name: Update Launch Template
+      run: |
         TEMPLATE_ID=$(aws ec2 describe-launch-templates --filters "Name=tag:Name,Values=${{ env.ASG_NAME }}-template" --query 'LaunchTemplates[].LaunchTemplateId' --output text)
         
         NEW_VERSION=$(aws ec2 create-launch-template-version \
