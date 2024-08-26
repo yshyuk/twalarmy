@@ -67,12 +67,7 @@ jobs:
       
     - name: Deploy to EC2
       run: |
-        DEPLOYMENT_ID=$(aws deploy create-deployment \
-          --application-name ${{ env.APPLICATION_NAME }} \
-          --deployment-group-name ${{ env.DEPLOYMENT_GROUP }} \
-          --github-location repository=${{ github.repository }},commitId=${{ github.sha }} \
-          --s3-location bucket=innovate-something-ec2-bucket,bundleType=zip,key=${{env.WAR_FILE}} \
-          --output text --query 'deploymentId')
+        DEPLOYMENT_ID=$(aws deploy create-deployment --application-name ${{ env.APPLICATION_NAME }} --deployment-group-name ${{ env.DEPLOYMENT_GROUP }} --github-location repository=${{ github.repository }},commitId=${{ github.sha }} --s3-location bucket=innovate-something-ec2-bucket,bundleType=zip,key=${{env.WAR_FILE}} --output text --query 'deploymentId')
         
         echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
 
