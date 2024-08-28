@@ -68,13 +68,13 @@ jobs:
     - name: Update Launch Template
       run: |
         LATEST_VERSION=$(aws ec2 describe-launch-template-versions \
-          --launch-template-name ${{ env.LAUNCH_TEMPLATE_NAME }} \
+          --launch-template-name ${{ env.TEMPLATE_NAME }} \
           --versions '$Latest' \
           --query 'LaunchTemplateVersions[0].VersionNumber' \
           --output text)
         
         NEW_VERSION=$(aws ec2 create-launch-template-version \
-          --launch-template-name ${{ env.LAUNCH_TEMPLATE_NAME }} \
+          --launch-template-name ${{ env.TEMPLATE_NAME }} \
           --version-description "Updated version with IAM role" \
           --source-version $LATEST_VERSION \
           --launch-template-data '{"IamInstanceProfile":{"Name":"${{ env.IAM_ROLE_NAME }}"}}' \
@@ -82,7 +82,7 @@ jobs:
           --output text)
         
         aws ec2 modify-launch-template \
-          --launch-template-name ${{ env.LAUNCH_TEMPLATE_NAME }} \
+          --launch-template-name ${{ env.TEMPLATE_NAME }} \
           --default-version $NEW_VERSION
       
     - name: Deploy to EC2
