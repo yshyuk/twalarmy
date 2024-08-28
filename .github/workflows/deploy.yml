@@ -84,14 +84,6 @@ jobs:
         aws ec2 modify-launch-template \
           --launch-template-name ${{ env.TEMPLATE_NAME }} \
           --default-version $NEW_VERSION
-
-    - name: Check appspec.yml
-      run: |
-       working-directory: /home/ec2-user
-        if [ ! -f appspec.yml ]; then
-          echo "Error: appspec.yml file not found in the repository root."
-          exit 1
-        fi
       
     - name: Deploy to EC2
       run: |
