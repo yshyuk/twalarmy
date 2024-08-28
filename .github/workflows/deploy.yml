@@ -87,6 +87,7 @@ jobs:
 
     - name: Check appspec.yml
       run: |
+       ls -l home/ec2-user
         if [ ! -f appspec.yml ]; then
           echo "Error: appspec.yml file not found in the repository root."
           exit 1
