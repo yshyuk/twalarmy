@@ -16,7 +16,7 @@ env:
   ASG_NAME: blue-green-setting                 # auto-scale  그룹
   INSTANCE_NAME: alarmy                        # instance 이름
   TEMPLATE_NAME: alarmy-template
-  IAM_ROLE_NAME: CodeDeployRule
+  IAM_ROLE_NAME: DemoRoleForEC2
 
 permissions:
   contents: read
