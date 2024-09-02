@@ -72,7 +72,7 @@ jobs:
         USER: ec2-user
       run: |
         echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-        ssh -i private_key -o StrictHostKeyChecking=no ec2-user@172.31.11.205
+        ssh -i private_key -o StrictHostKeyChecking=no ec2-user@52.78.139.150
         aws s3 cp s3://innovate-something-ec2-bucket/${{env.WAR_FILE}} ec2-user@52.78.139.150:home/ec2-user/${{env.WAR_FILE}}
           sudo systemctl stop alarmy
           sudo mv /home/ec2-user/${{env.WAR_FILE}} /home/ec2-user/${{env.WAR_FILE}}.bak
