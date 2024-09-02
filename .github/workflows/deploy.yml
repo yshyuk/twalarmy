@@ -17,6 +17,7 @@ env:
   INSTANCE_NAME: alarmy                        # instance 이름
   TEMPLATE_NAME: alarmy-template
   IAM_ROLE_NAME: DemoRoleForEC2
+  DEPLOY_PATH: /home/ec2-user
 
 permissions:
   contents: read
@@ -65,6 +66,19 @@ jobs:
         ls -R build/libs
         aws s3 cp build/libs/alarmy-0.0.1-SNAPSHOT.war s3://innovate-something-ec2-bucket/${{env.WAR_FILE}}
 
+    - name: Deploy WAR file to EC2
+      env:
+        PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+        USER: ec2-user
+      run: |
+        echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+        ssh -i private_key -o StrictHostKeyChecking=no ec2-user@172.31.11.205
+        aws s3 cp s3://innovate-something-ec2-bucket/${{env.WAR_FILE}} ec2-user@172.31.11.205:home/ec2-user/${{env.WAR_FILE}}
+          sudo systemctl stop alarmy
+          sudo mv /home/ec2-user/${{env.WAR_FILE}} /home/ec2-user/${{env.WAR_FILE}}.bak
+          sudo mv /home/ec2-user/${{env.WAR_FILE}} /home/ec2-user/${{env.WAR_FILE}}
+          sudo systemctl start alarmy
+
     - name: Update Launch Template
       run: |
         LATEST_VERSION=$(aws ec2 describe-launch-template-versions \
@@ -84,12 +98,6 @@ jobs:
         aws ec2 modify-launch-template \
           --launch-template-name ${{ env.TEMPLATE_NAME }} \
           --default-version $NEW_VERSION
-      
-    - name: Deploy to EC2
-      run: |
-        DEPLOYMENT_ID=$(aws deploy create-deployment --application-name ${{ env.APPLICATION_NAME }} --deployment-group-name ${{ env.DEPLOYMENT_GROUP }} --github-location repository=${{ github.repository }},commitId=${{ github.sha }} --s3-location bucket=innovate-something-ec2-bucket,bundleType=zip,key=${{env.WAR_FILE}} --output text --query 'deploymentId')
-        
-        echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
 
     - name: Wait for deployment to complete
       run: |
