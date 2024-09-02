@@ -26,3 +26,7 @@ hooks:
     - location: stop.sh
       timeout: 20
       runas: ec2-user
+  BeforeInstall:
+    - location: beforeInstall/sh
+      timeout: 20
+      runas: ec2-user
