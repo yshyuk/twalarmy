@@ -60,6 +60,7 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
+        PRIVATE_KEY: ${{secrets.EC2_SSH_PRIVATE_KEY}}
 
     - name: Upload WAR file to S3
       run: |
@@ -67,9 +68,6 @@ jobs:
         aws s3 cp build/libs/alarmy-0.0.1-SNAPSHOT.war s3://innovate-something-ec2-bucket/${{env.WAR_FILE}}
 
     - name: Deploy WAR file to EC2
-      env:
-        PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-        USER: ec2-user
       run: |
         echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
         ssh -i private_key -o StrictHostKeyChecking=no ec2-user@52.78.139.150
