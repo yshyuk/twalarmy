@@ -3,6 +3,19 @@ os: linux
 files:
   - source: /
     destination: /home/ec2-user
+permissions:
+  - object: /home/ec2-user
+    pattern: "*.sh"
+    mode: 777
+    owner: ec2-user
+    type:
+      - file
+  - object: /home
+    pattern: "ec2-user"
+    mode: 755
+    owner: ec2-user
+    type:
+      - directory
 
 hooks:
   ApplicationStart:
