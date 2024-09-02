@@ -10,7 +10,7 @@ on:
 
 env:
   AWS_REGION: ap-northeast-2                   # set this to your preferred AWS region, e.g. us-west-1
-  APPLICATION_NAME: deploy-alarmy              # CodeDeploy 애플리케이션 이름
+  APPLICATION_NAME: alarmy-test                # CodeDeploy 애플리케이션 이름
   DEPLOYMENT_GROUP: master                     # CodeDeploy 배포 그룹 이름
   WAR_FILE: alarmy-0.0.1-SNAPSHOT.war          # war 파일 이름
   ASG_NAME: blue-green-setting                 # auto-scale  그룹
@@ -67,15 +67,13 @@ jobs:
         ls -R build/libs
         aws s3 cp build/libs/alarmy-0.0.1-SNAPSHOT.war s3://innovate-something-ec2-bucket/${{env.WAR_FILE}}
 
-    - name: Deploy WAR file to EC2
+    - name: Deploy to EC2 via CodeDeploy
       run: |
-        echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-        ssh -i private_key -o StrictHostKeyChecking=no ec2-user@52.78.139.150
-        aws s3 cp s3://innovate-something-ec2-bucket/${{env.WAR_FILE}} ec2-user@52.78.139.150:home/ec2-user/${{env.WAR_FILE}}
-          sudo systemctl stop alarmy
-          sudo mv /home/ec2-user/${{env.WAR_FILE}} /home/ec2-user/${{env.WAR_FILE}}.bak
-          sudo mv /home/ec2-user/${{env.WAR_FILE}} /home/ec2-user/${{env.WAR_FILE}}
-          sudo systemctl start alarmy
+        aws deploy create-deployment \
+          --application-name ${{env.APPLICATION_NAME}} \
+          --deployment-group-name ${{env.DEPLOYMENT_GROUP}} \
+          --s3-location bucket=${{ secrets.S3_BUCKET }},bundleType=zip,key=myapp.war \
+          --file-exists-behavior OVERWRITE
 
     - name: Update Launch Template
       run: |
