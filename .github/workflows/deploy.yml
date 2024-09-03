@@ -72,7 +72,7 @@ jobs:
         aws deploy create-deployment \
           --application-name ${{env.APPLICATION_NAME}} \
           --deployment-group-name ${{env.DEPLOYMENT_GROUP}} \
-          --s3-location bucket= innovate-something-ec2-bucket ,bundleType=zip,key=${{env.WAR_FILE}} \
+          --s3-location bucket= innovate-something-ec2-bucket ,bundleType=war,key=${{env.WAR_FILE}} \
           --file-exists-behavior OVERWRITE
 
     - name: Update Launch Template
