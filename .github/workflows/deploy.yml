@@ -13,6 +13,7 @@ env:
   APPLICATION_NAME: alarmy-test                # CodeDeploy 애플리케이션 이름
   DEPLOYMENT_GROUP: master                     # CodeDeploy 배포 그룹 이름
   WAR_FILE: alarmy-0.0.1-SNAPSHOT.war          # war 파일 이름
+  TAR_FILE: application.tar.gz                 # tar 파일 이름
   ASG_NAME: blue-green-setting                 # auto-scale  그룹
   INSTANCE_NAME: alarmy                        # instance 이름
   TEMPLATE_NAME: alarmy-template
@@ -39,20 +40,18 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
       
-    - name: Upload WAR file
-      uses: actions/upload-artifact@v4
-      with:
-        name: app
-        path: build/libs/*.war
+    - name: Package WAR into TAR
+      run: |
+        mkdir -p package
+        cp build/libs/${{ env.WAR_FILE }} package/
+        cp appspec.yml package/
+        cp -r scripts package/
+        tar -czf ${{ env.TAR_FILE }} -C package .
         
-    - name: Download WAR file
-      uses: actions/download-artifact@v4
-      with:
-        name: app
-    - name: Check WAR file
+    - name: Check TAR file
       run: |
         ls -l build/libs
-        echo "WAR_FILE=$(ls build/libs/*.war | head -n 1)" >> $GITHUB_ENV
+        echo "TAR_FILE=$(ls build/libs/*.tar | head -n 1)" >> $GITHUB_ENV
         
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -62,17 +61,17 @@ jobs:
         aws-region: ${{ env.AWS_REGION }}
         PRIVATE_KEY: ${{secrets.EC2_SSH_PRIVATE_KEY}}
 
-    - name: Upload WAR file to S3
+    - name: Upload TAR to S3
       run: |
         ls -R build/libs
-        aws s3 cp build/libs/alarmy-0.0.1-SNAPSHOT.war s3://innovate-something-ec2-bucket/${{env.WAR_FILE}}
+        aws s3 cp ${{ env.TAR_FILE }} s3://${{ env.S3_BUCKET }}/${{ env.TAR_FILE }}
 
     - name: Deploy to EC2 via CodeDeploy
       run: |
         aws deploy create-deployment \
           --application-name ${{env.APPLICATION_NAME}} \
           --deployment-group-name ${{env.DEPLOYMENT_GROUP}} \
-          --s3-location bucket=innovate-something-ec2-bucket,bundleType=war,key=${{env.WAR_FILE}} \
+          --s3-location bucket=innovate-something-ec2-bucket,key=${{env.TAR_FILE}},bundleType=tgz \
           --file-exists-behavior OVERWRITE
 
     - name: Update Launch Template
