@@ -61,12 +61,13 @@ jobs:
 
     - name: Deploy to EC2 via CodeDeploy
       run: |
+        DEPLOYMENT_ID=$(aws deploy create-deployment
         aws deploy create-deployment \
           --application-name ${{env.APPLICATION_NAME}} \
           --deployment-group-name ${{env.DEPLOYMENT_GROUP}} \
           --s3-location bucket=innovate-something-ec2-bucket,key=${{env.TAR_FILE}},bundleType=tgz \
           --file-exists-behavior OVERWRITE
-          --output text --query 'deploymentId'
+          --output text --query 'deployment_Id')
           
         echo "Deployment ID: $DEPLOYMENT_ID"
         echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
