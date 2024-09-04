@@ -46,11 +46,6 @@ jobs:
         cp build/libs/${{ env.WAR_FILE }} package/
         tar -czf ${{ env.TAR_FILE }} -C package .
         
-    - name: Check TAR file
-      run: |
-        ls -l build/libs
-        echo "TAR_FILE=$(ls build/libs/*.tar.gz | head -n 1)" >> $GITHUB_ENV
-        
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
