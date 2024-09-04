@@ -66,7 +66,7 @@ jobs:
           --deployment-group-name ${{env.DEPLOYMENT_GROUP}} \
           --s3-location bucket=innovate-something-ec2-bucket,key=${{env.TAR_FILE}},bundleType=tgz \
           --file-exists-behavior OVERWRITE
-          --output text --query 'deploymentId')
+          --output text --query 'deploymentId'
           
         echo "Deployment ID: $DEPLOYMENT_ID"
         echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
