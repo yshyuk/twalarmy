@@ -57,7 +57,7 @@ jobs:
     - name: Upload TAR to S3
       run: |
         ls -R build/libs
-        aws s3 cp ${{ env.TAR_FILE }} s3://${{ env.S3_BUCKET }}/${{ env.TAR_FILE }}
+        aws s3 cp ${{ env.TAR_FILE }} s3://innovate-something-ec2-bucket/${{ env.TAR_FILE }}
 
     - name: Deploy to EC2 via CodeDeploy
       run: |
