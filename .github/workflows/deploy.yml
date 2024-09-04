@@ -44,8 +44,6 @@ jobs:
       run: |
         mkdir -p package
         cp build/libs/${{ env.WAR_FILE }} package/
-        cp appspec.yml package/
-        cp -r scripts package/
         tar -czf ${{ env.TAR_FILE }} -C package .
         
     - name: Check TAR file
