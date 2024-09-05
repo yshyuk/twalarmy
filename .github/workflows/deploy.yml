@@ -92,10 +92,6 @@ jobs:
           --launch-template-name ${{ env.TEMPLATE_NAME }} \
           --default-version $NEW_VERSION
 
-    - name: Wait for deployment to complete
-      run: |
-        aws deploy wait deployment-successful --deployment-id ${{env.DEPLOYMENT_ID}}
-
     - name: Create AMI
       run: |
         INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=${{ env.INSTANCE_NAME }}" --query 'Reservations[].Instances[].InstanceId' --output text)
