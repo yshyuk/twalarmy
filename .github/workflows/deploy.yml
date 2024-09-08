@@ -115,21 +115,6 @@ jobs:
         echo "ami_id=$AMI_ID" >> $GITHUB_OUTPUT
         echo "ami_name=$AMI_NAME" >> $GITHUB_OUTPUT
 
-    - name: Update Launch Template
-      run: |
-        TEMPLATE_ID=$(aws ec2 describe-launch-templates --filters "Name=tag:Name,Values=${{ env.ASG_NAME }}-template" --query 'LaunchTemplates[].LaunchTemplateId' --output text)
-        
-        NEW_VERSION=$(aws ec2 create-launch-template-version \
-          --launch-template-id $TEMPLATE_ID \
-          --source-version '$Latest' \
-          --launch-template-data '{"ImageId":"'$AMI_ID'"}' \
-          --query 'LaunchTemplateVersion.VersionNumber' --output text)
-        
-        echo "Created new launch template version: $NEW_VERSION"
-        
-        aws ec2 modify-launch-template \
-          --launch-template-id $TEMPLATE_ID \
-          --default-version $NEW_VERSION
 
     - name: Perform Blue/Green Deployment
       run: |
