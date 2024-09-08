@@ -95,10 +95,11 @@ jobs:
     - name: Create AMI
       run: |
         INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=${{ env.INSTANCE_NAME }}" --query 'Reservations[].Instances[].InstanceId' --output text)
+        TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
         
         AMI_ID=$(aws ec2 create-image \
           --instance-id $INSTANCE_ID \
-          --name "AMI-${{ github.sha }}" \
+          --name "Alarmy-${{TIMESTAMP}}" \
           --description "AMI created from successful deployment" \
           --query 'ImageId' --output text)
         
