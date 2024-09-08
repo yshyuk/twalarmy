@@ -94,17 +94,26 @@ jobs:
 
     - name: Create AMI
       run: |
-        INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=${{ env.INSTANCE_NAME }}" --query 'Reservations[].Instances[].InstanceId' --output text)
+      
+        # 현재 날짜와 시간을 이용해 고유한 AMI 이름 생성
         TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
-        AMI_NAME = "Alarmy-${{TIMESTAMP}}"
+        AMI_NAME="MyAMI-${TIMESTAMP}"
         
+        # EC2 인스턴스 ID 가져오기 (예: 태그로 식별)
+        INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=alarmy" --query 'Reservations[].Instances[].InstanceId' --output text)
+        
+        # AMI 생성
         AMI_ID=$(aws ec2 create-image \
           --instance-id $INSTANCE_ID \
-          --name "AMI_NAME" \
-          --description "AMI created from successful deployment" \
-          --query 'ImageId' --output text)
+          --name "$AMI_NAME" \
+          --description "My AMI created at ${TIMESTAMP}" \
+          --output text)
         
-        echo "Created AMI: $AMI_ID"
+        echo "Created AMI with ID: $AMI_ID and name: $AMI_NAME"
+        
+        # GitHub Actions 출력 설정
+        echo "ami_id=$AMI_ID" >> $GITHUB_OUTPUT
+        echo "ami_name=$AMI_NAME" >> $GITHUB_OUTPUT
 
     - name: Update Launch Template
       run: |
