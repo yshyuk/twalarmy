@@ -112,7 +112,7 @@ jobs:
         echo "Created AMI with ID: $AMI_ID and name: $AMI_NAME"
         
         # GitHub Actions 출력 설정
-        echo "ami_id=$AMI_ID" >> $GITHUB_OUTPUT
+        echo "ami_id=$AMI_ID" >> $GITHUB_ENV
         echo "ami_name=$AMI_NAME" >> $GITHUB_OUTPUT
         
     # 시작 템플릿을 업데이트
@@ -132,7 +132,7 @@ jobs:
           --version-description "Updated version with IAM role" \
           --source-version $LATEST_VERSION \
           --launch-template-data '{
-            "ImageId": "${{ steps.create_ami.outputs.ami_id }}",
+            "ImageId": "${{ env.AMI_ID }}",
             "IamInstanceProfile":{"Name":"${{ env.IAM_ROLE_NAME }}"}
             }' \
           --query 'LaunchTemplateVersion.VersionNumber' \
