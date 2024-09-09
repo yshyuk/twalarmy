@@ -132,7 +132,7 @@ jobs:
           --version-description "Updated version with IAM role" \
           --source-version $LATEST_VERSION \
           --launch-template-data '{
-            "ImageId": "${{ env.AMI_ID }}",
+            "ImageId": "${{ env.ami_id }}",
             "IamInstanceProfile":{"Name":"${{ env.IAM_ROLE_NAME }}"}
             }' \
           --query 'LaunchTemplateVersion.VersionNumber' \
