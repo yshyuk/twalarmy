@@ -29,7 +29,7 @@ env:
   SUBNET_NAME: subnet-a                        # Subnet 이름
   TARGET_GROUP: test-group                     # Auto Scaling에서 사용될 대상 그룹 이름
   ASG_NAME_PREFIX: blue-green-setting          # Auto Scaling Group 이름 접두사
-  TARGET_GROUP_NAME: test-group-tg             # Target Group 이름
+  TARGET_GROUP_NAME: test-group             # Target Group 이름
 
 permissions:
   contents: read
