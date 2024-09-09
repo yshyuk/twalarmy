@@ -124,7 +124,7 @@ jobs:
         
         aws autoscaling create-auto-scaling-group \
           --auto-scaling-group-name $NEW_ASG_NAME \
-          --launch-template LaunchTemplateId=$TEMPLATE_ID,Version='$Latest' \
+          --launch-template LaunchTemplateName=${{env.TEMPLATE_NAME}},Version='$Latest' \
           --min-size 1 \
           --max-size 3 \
           --desired-capacity 2 \
