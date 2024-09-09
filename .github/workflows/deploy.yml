@@ -168,7 +168,7 @@ jobs:
           --max-size 3 \
           --desired-capacity 2 \
           --target-group-arns $(aws elbv2 describe-target-groups --names ${{ env.TARGET_GROUP }} --query 'TargetGroups[].TargetGroupArn' --output text) \
-          --vpc-zone-identifier $(aws ec2 describe-subnets --filters "Name=tag:Name,Values=${{ env.SUBNET_NAME }}" --query 'Subnets[].SubnetId' --output json | jq -r 'join(",")')
+          --vpc-zone-identifier $(aws ec2 describe-subnets --filters "Name=tag:Name,Values=${{ env.SUBNET_NAME }}" --query 'Subnets[].SubnetId' --output json | jq -r 'join(",")')\
           --tags ResourceId=$NEW_ASG_NAME,ResourceType=auto-scaling-group,Key=Name,Value=$NEW_ASG_INSTANCE_NAME,PropagateAtLaunch=true
 
         # 기존의 auto-scaling 그룹을 중단
