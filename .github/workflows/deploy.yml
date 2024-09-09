@@ -29,6 +29,7 @@ env:
   SUBNET_NAME: subnet-a                        # Subnet 이름
   TARGET_GROUP: test-group                     # Auto Scaling에서 사용될 대상 그룹 이름
   ASG_NAME_PREFIX: blue-green-setting          # Auto Scaling Group 이름 접두사
+  TARGET_GROUP_NAME: test-group-tg             # Target Group 이름
 
 permissions:
   contents: read
@@ -134,7 +135,18 @@ jobs:
           --source-version $LATEST_VERSION \
           --launch-template-data '{
             "ImageId": "${{ env.ami_id }}",
-            "IamInstanceProfile":{"Name":"${{ env.IAM_ROLE_NAME }}"}
+            "IamInstanceProfile":{"Name":"${{ env.IAM_ROLE_NAME }}"},
+            "TagSpecifications": [
+              {
+                "ResourceType": "instance",
+                "Tags": [
+                  {
+                    "Key": "Name",
+                    "Value": "${{ env.INSTANCE_NAME }}"
+                  }
+                ]
+              }
+            ]
             }' \
           --query 'LaunchTemplateVersion.VersionNumber' \
           --output text)
@@ -151,6 +163,15 @@ jobs:
           --query "AutoScalingGroups[?starts_with(AutoScalingGroupName, '${ASG_NAME_PREFIX}')].AutoScalingGroupName" \
           --output text)
         echo "BLUE_ASG=${BLUE_ASG}" >> $GITHUB_ENV
+
+    # 로드 밸런서 대상 그룹 ARN 값 가져오기
+    - name: Get Target Group ARN
+      run: |
+        TARGET_GROUP_ARN=$(aws elbv2 describe-target-groups \
+          --names ${{ env.TARGET_GROUP_NAME }} \
+          --query 'TargetGroups[0].TargetGroupArn' \
+          --output text)
+        echo "TARGET_GROUP_ARN=$TARGET_GROUP_ARN" >> $GITHUB_ENV
 
     # Blue/Green 배포
     - name: Perform Blue/Green Deployment
@@ -177,6 +198,30 @@ jobs:
           --min-size 0 \
           --max-size 0 \
           --desired-capacity 0
+
+    - name: Verify ASG Creation and Instance Naming
+      run: |
+        echo "Waiting for instances to be created..."
+        sleep 90  # Wait for instances to be created and initialized
+
+        INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
+          --auto-scaling-group-names "${{ env.ASG_NAME }}" \
+          --query "AutoScalingGroups[0].Instances[*].InstanceId" \
+          --output text)
+
+        for ID in $INSTANCE_IDS; do
+          NAME=$(aws ec2 describe-tags \
+            --filters "Name=resource-id,Values=$ID" "Name=key,Values=Name" \
+            --query "Tags[0].Value" \
+            --output text)
+          echo "Instance $ID has name: $NAME"
+        done
+
+        REGISTERED=$(aws elbv2 describe-target-health \
+            --target-group-arn ${{ env.TARGET_GROUP_ARN }} \
+            --targets Id=$ID \
+            --query 'TargetHealthDescriptions[0].TargetHealth.State' \
+            --output text)
 
         # 중단 후 삭제
         aws autoscaling delete-auto-scaling-group \
