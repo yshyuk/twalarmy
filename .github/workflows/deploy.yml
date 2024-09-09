@@ -1,13 +1,19 @@
-# This workflow will build and push a new container image to Amazon ECR,
-# and then will deploy a new task definition to Amazon ECS, when there is a push to the "master" branch.
-
+# 자동 배포 workflow
+# 과정
+# 1. S3에 tar 파일로 압축하여 업로드
+# 2. S3에서 EC2로 압축 해제 후 배포
+# 3. 해당 인스턴스를 기준으로 AMI 생성
+# 4. 시작 템플릿에 생성된 이미지를 최신 버전으로 업데이트
+# 5. Auto Scaling을 활용하여 Blue/Green 배포
 
 name: Deploy to Amazon ECS
 
+# 배포 대상 branch
 on:
   push:
     branches: [ "master" ]
-
+    
+# 환경설정
 env:
   AWS_REGION: ap-northeast-2                   # set this to your preferred AWS region, e.g. us-west-1
   APPLICATION_NAME: alarmy-test                # CodeDeploy 애플리케이션 이름
@@ -16,12 +22,12 @@ env:
   TAR_FILE: application.tar.gz                 # tar 파일 이름
   ASG_NAME: blue-green-setting                 # auto-scale  그룹
   INSTANCE_NAME: alarmy                        # instance 이름
-  TEMPLATE_NAME: alarmy-template
-  IAM_ROLE_NAME: DemoRoleForEC2
-  DEPLOY_PATH: /home/ec2-user
-  VPC_NAME: vpc-yshyuk
-  SUBNET_NAME: subnet-a
-  TARGET_GROUP: test-group
+  TEMPLATE_NAME: alarmy-template               # 시작 템플릿 이름
+  IAM_ROLE_NAME: DemoRoleForEC2                # IAM에서 사용할 Role 이름
+  DEPLOY_PATH: /home/ec2-user                  # EC2의 배포 경로
+  VPC_NAME: vpc-yshyuk                         # VPC 이름
+  SUBNET_NAME: subnet-a                        # Subnet 이름
+  TARGET_GROUP: test-group                     # Auto Scaling에서 사용될 대상 그룹 이름
 
 permissions:
   contents: read
@@ -29,25 +35,34 @@ permissions:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
+    # 저장소의 코드를 checkout 한다.
     steps:
     - uses: actions/checkout@v4
+
+    # JDK 17 설정 (해당 코드의 자바 버전은 jdk 17)
     - name: Set up JDK 17
       uses: actions/setup-java@v3
       with:
         java-version: '17'
         distribution: 'adopt'
+
+    # gradlew 사용 가능하도록 권한 부여
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-      
+
+    # gradlew를 사용한 애플리케이션 빌드
     - name: Build with Gradle
       run: ./gradlew build
-      
+
+    # 빌드된 war 파일을 tar 파일로 패키지
     - name: Package WAR into TAR
       run: |
         mkdir -p package
         cp build/libs/${{ env.WAR_FILE }} package/
         tar -czf ${{ env.TAR_FILE }} -C package .
-        
+
+    # AWS 권한 설정
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -56,11 +71,13 @@ jobs:
         aws-region: ${{ env.AWS_REGION }}
         PRIVATE_KEY: ${{secrets.EC2_SSH_PRIVATE_KEY}}
 
+    # 패키징한 tar 파일을 S3로 업로드
     - name: Upload TAR to S3
       run: |
         ls -R build/libs
         aws s3 cp ${{ env.TAR_FILE }} s3://innovate-something-ec2-bucket/${{ env.TAR_FILE }}
 
+    # S3 -> EC2로 deploy
     - name: Deploy to EC2 via CodeDeploy
       run: |
         DEPLOYMENT_ID=$(aws deploy create-deployment \
@@ -73,27 +90,8 @@ jobs:
           
         echo "Deployment ID: $DEPLOYMENT_ID"
         echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
-        
-    - name: Update Launch Template
-      run: |
-        LATEST_VERSION=$(aws ec2 describe-launch-template-versions \
-          --launch-template-name ${{ env.TEMPLATE_NAME }} \
-          --versions '$Latest' \
-          --query 'LaunchTemplateVersions[0].VersionNumber' \
-          --output text)
-        
-        NEW_VERSION=$(aws ec2 create-launch-template-version \
-          --launch-template-name ${{ env.TEMPLATE_NAME }} \
-          --version-description "Updated version with IAM role" \
-          --source-version $LATEST_VERSION \
-          --launch-template-data '{"IamInstanceProfile":{"Name":"${{ env.IAM_ROLE_NAME }}"}}' \
-          --query 'LaunchTemplateVersion.VersionNumber' \
-          --output text)
-        
-        aws ec2 modify-launch-template \
-          --launch-template-name ${{ env.TEMPLATE_NAME }} \
-          --default-version $NEW_VERSION
 
+    # AMI 생성
     - name: Create AMI
       run: |
       
@@ -116,12 +114,43 @@ jobs:
         # GitHub Actions 출력 설정
         echo "ami_id=$AMI_ID" >> $GITHUB_OUTPUT
         echo "ami_name=$AMI_NAME" >> $GITHUB_OUTPUT
+        
+    # 시작 템플릿을 업데이트
+    - name: Update Launch Template
+      run: |
 
+        # 가장 최신 버전 조회
+        LATEST_VERSION=$(aws ec2 describe-launch-template-versions \
+          --launch-template-name ${{ env.TEMPLATE_NAME }} \
+          --versions '$Latest' \
+          --query 'LaunchTemplateVersions[0].VersionNumber' \
+          --output text)
 
+        # 새로운 버전 생성
+        NEW_VERSION=$(aws ec2 create-launch-template-version \
+          --launch-template-name ${{ env.TEMPLATE_NAME }} \
+          --version-description "Updated version with IAM role" \
+          --source-version $LATEST_VERSION \
+          --launch-template-data '{
+            "ImageId": "${{ steps.create_ami.outputs.ami_id }}",
+            "IamInstanceProfile":{"Name":"${{ env.IAM_ROLE_NAME }}"}
+            }' \
+          --query 'LaunchTemplateVersion.VersionNumber' \
+          --output text)
+
+        # 기본 버전을 새로 생성한 버전으로 업데이트
+        aws ec2 modify-launch-template \
+          --launch-template-name ${{ env.TEMPLATE_NAME }} \
+          --default-version $NEW_VERSION
+
+    # Blue/Green 배포
     - name: Perform Blue/Green Deployment
       run: |
+
+        # TimeStamp를 사용하여 새로운 배포 이름 생성
         NEW_ASG_NAME="${{ env.ASG_NAME }}-$(date +%Y%m%d%H%M%S)"
-        
+
+        # auto-scaling 그룹 생성 (Green 그룹)
         aws autoscaling create-auto-scaling-group \
           --auto-scaling-group-name $NEW_ASG_NAME \
           --launch-template LaunchTemplateName=${{env.TEMPLATE_NAME}},Version='$Latest' \
@@ -130,17 +159,20 @@ jobs:
           --desired-capacity 2 \
           --target-group-arns $(aws elbv2 describe-target-groups --names ${{ env.TARGET_GROUP }} --query 'TargetGroups[].TargetGroupArn' --output text) \
           --vpc-zone-identifier $(aws ec2 describe-subnets --filters "Name=tag:Name,Values=${{ env.SUBNET_NAME }}" --query 'Subnets[].SubnetId' --output json | jq -r 'join(",")')
-        
+
+        # 기존의 auto-scaling 그룹을 중단
         aws autoscaling update-auto-scaling-group \
           --auto-scaling-group-name ${{ env.ASG_NAME }} \
           --min-size 0 \
           --max-size 0 \
           --desired-capacity 0
-        
+
+        # 중단 후 삭제
         aws autoscaling delete-auto-scaling-group \
           --auto-scaling-group-name ${{ env.ASG_NAME }} \
           --force-delete
-        
+
+        # 기존의 auto-scaling 그룹을 삭제
         aws autoscaling update-auto-scaling-group \
           --auto-scaling-group-name $NEW_ASG_NAME \
           --auto-scaling-group-name ${{ env.ASG_NAME }}
