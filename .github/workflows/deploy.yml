@@ -21,6 +21,7 @@ env:
   DEPLOY_PATH: /home/ec2-user
   VPC_NAME: vpc-yshyuk
   SUBNET_NAME: subnet-a
+  TARGET_GROUP: test-group
 
 permissions:
   contents: read
@@ -128,7 +129,7 @@ jobs:
           --min-size 1 \
           --max-size 3 \
           --desired-capacity 2 \
-          --target-group-arns $(aws elbv2 describe-target-groups --names ${{ env.ASG_NAME }}-tg --query 'TargetGroups[].TargetGroupArn' --output text) \
+          --target-group-arns $(aws elbv2 describe-target-groups --names ${{ env.TARGET_GROUP }} --query 'TargetGroups[].TargetGroupArn' --output text) \
           --vpc-zone-identifier $(aws ec2 describe-subnets --filters "Name=tag:Name,Values=${{ env.SUBNET_NAME }}" --query 'Subnets[].SubnetId' --output json | jq -r 'join(",")')
         
         aws autoscaling update-auto-scaling-group \
