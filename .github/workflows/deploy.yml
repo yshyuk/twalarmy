@@ -205,7 +205,7 @@ jobs:
         sleep 90  # Wait for instances to be created and initialized
 
         INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
-          --auto-scaling-group-names "${{ env.ASG_NAME }}" \
+          --auto-scaling-group-names $NEW_ASG_NAME \
           --query "AutoScalingGroups[0].Instances[*].InstanceId" \
           --output text)
 
