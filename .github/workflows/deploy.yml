@@ -28,6 +28,7 @@ env:
   VPC_NAME: vpc-yshyuk                         # VPC 이름
   SUBNET_NAME: subnet-a                        # Subnet 이름
   TARGET_GROUP: test-group                     # Auto Scaling에서 사용될 대상 그룹 이름
+  ASG_NAME_PREFIX: blue-green-setting          # Auto Scaling Group 이름 접두사
 
 permissions:
   contents: read
@@ -96,7 +97,7 @@ jobs:
       run: |
       
         # 현재 날짜와 시간을 이용해 고유한 AMI 이름 생성
-        TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
+        TIMESTAMP=$(date +"%Y%m%d-%H%M")
         AMI_NAME="MyAMI-${TIMESTAMP}"
         
         # EC2 인스턴스 ID 가져오기 (예: 태그로 식별)
@@ -143,12 +144,21 @@ jobs:
           --launch-template-name ${{ env.TEMPLATE_NAME }} \
           --default-version $NEW_VERSION
 
+    # Blue 그룹 이름 가져오기
+    - name: Identify current (Blue) ASG
+      run: |
+        BLUE_ASG=$(aws autoscaling describe-auto-scaling-groups \
+          --query "AutoScalingGroups[?starts_with(AutoScalingGroupName, '${ASG_NAME_PREFIX}')].AutoScalingGroupName" \
+          --output text)
+        echo "BLUE_ASG=${BLUE_ASG}" >> $GITHUB_ENV
+
     # Blue/Green 배포
     - name: Perform Blue/Green Deployment
       run: |
 
         # TimeStamp를 사용하여 새로운 배포 이름 생성
-        NEW_ASG_NAME="${{ env.ASG_NAME }}-$(date +%Y%m%d%H%M%S)"
+        NEW_ASG_NAME="${{ env.ASG_NAME }}-$(date +%Y%m%d%H%M)"
+        NEW_ASG_INSTANCE_NAME="${{env.INSTANCE_NAME}}-asg"
 
         # auto-scaling 그룹 생성 (Green 그룹)
         aws autoscaling create-auto-scaling-group \
@@ -159,20 +169,21 @@ jobs:
           --desired-capacity 2 \
           --target-group-arns $(aws elbv2 describe-target-groups --names ${{ env.TARGET_GROUP }} --query 'TargetGroups[].TargetGroupArn' --output text) \
           --vpc-zone-identifier $(aws ec2 describe-subnets --filters "Name=tag:Name,Values=${{ env.SUBNET_NAME }}" --query 'Subnets[].SubnetId' --output json | jq -r 'join(",")')
+          --tags ResourceId=$NEW_ASG_NAME,ResourceType=auto-scaling-group,Key=Name,Value=$NEW_ASG_INSTANCE_NAME,PropagateAtLaunch=true
 
         # 기존의 auto-scaling 그룹을 중단
         aws autoscaling update-auto-scaling-group \
-          --auto-scaling-group-name ${{ env.ASG_NAME }} \
+          --auto-scaling-group-name ${{ env.BLUE_ASG }} \
           --min-size 0 \
           --max-size 0 \
           --desired-capacity 0
 
         # 중단 후 삭제
         aws autoscaling delete-auto-scaling-group \
-          --auto-scaling-group-name ${{ env.ASG_NAME }} \
+          --auto-scaling-group-name ${{ env.BLUE_ASG }} \
           --force-delete
 
         # 기존의 auto-scaling 그룹을 삭제
         aws autoscaling update-auto-scaling-group \
           --auto-scaling-group-name $NEW_ASG_NAME \
-          --auto-scaling-group-name ${{ env.ASG_NAME }}
+          --auto-scaling-group-name ${{ env.BLUE_ASG }}
