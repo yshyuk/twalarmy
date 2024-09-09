@@ -130,9 +130,6 @@ jobs:
           --desired-capacity 2 \
           --target-group-arns $(aws elbv2 describe-target-groups --names ${{ env.TARGET_GROUP }} --query 'TargetGroups[].TargetGroupArn' --output text) \
           --vpc-zone-identifier $(aws ec2 describe-subnets --filters "Name=tag:Name,Values=${{ env.SUBNET_NAME }}" --query 'Subnets[].SubnetId' --output json | jq -r 'join(",")')
-
-        # 새 ASG의 인스턴스가 준비될 때까지 대기
-        aws autoscaling wait group-in-service --auto-scaling-group-name $NEW_ASG_NAME
         
         aws autoscaling update-auto-scaling-group \
           --auto-scaling-group-name ${{ env.ASG_NAME }} \
