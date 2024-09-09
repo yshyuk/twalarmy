@@ -27,7 +27,6 @@ permissions:
   contents: read
 
 jobs:
-
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
