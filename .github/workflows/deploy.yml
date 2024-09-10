@@ -209,6 +209,11 @@ jobs:
           --query "AutoScalingGroups[0].Instances[*].InstanceId" \
           --output text)
 
+        if [ -z "$INSTANCE_IDS" ]; then
+          echo "Error: No instances found in the Auto Scaling Group"
+          exit 1
+        fi
+
         for ID in $INSTANCE_IDS; do
           NAME=$(aws ec2 describe-tags \
             --filters "Name=resource-id,Values=$ID" "Name=key,Values=Name" \
