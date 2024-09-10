@@ -181,6 +181,8 @@ jobs:
         NEW_ASG_NAME="${{ env.ASG_NAME }}-$(date +%Y%m%d%H%M)"
         NEW_ASG_INSTANCE_NAME="${{env.INSTANCE_NAME}}-asg"
 
+        echo "new asg name = $NEW_ASG_NAME" >> $GITHUB_ENV
+
         # auto-scaling 그룹 생성 (Green 그룹)
         aws autoscaling create-auto-scaling-group \
           --auto-scaling-group-name $NEW_ASG_NAME \
