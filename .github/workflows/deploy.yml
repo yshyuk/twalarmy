@@ -85,7 +85,7 @@ jobs:
         DEPLOYMENT_ID=$(aws deploy create-deployment \
           --application-name ${{env.APPLICATION_NAME}} \
           --deployment-group-name ${{env.DEPLOYMENT_GROUP}} \
-          --s3-location bucket=innovate-something-ec2-bucket,key=${{env.TAR_FILE}},bundleType=tgz \
+          --s3-location bucket=innovate-something-ec2-bucket,bundleType=tar,key=${{env.TAR_FILE}}\
           --file-exists-behavior OVERWRITE \
           --output text \
           --query 'deploymentId')
@@ -197,12 +197,14 @@ jobs:
     - name: Verify ASG Creation and Instance Naming
       run: |
         echo "Waiting for instances to be created..."
-        sleep 1000  # Wait for instances to be created and initialized
+        sleep 720  # Wait for instances to be created and initialized
 
         INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
           --auto-scaling-group-names $NEW_ASG_NAME \
           --query "AutoScalingGroups[0].Instances[*].InstanceId" \
           --output text)
+
+        echo "INSTANCE_IDS = $INSTANCE_IDS"
 
         if [ -z "$INSTANCE_IDS" ]; then
           echo "Error: No instances found in the Auto Scaling Group"
