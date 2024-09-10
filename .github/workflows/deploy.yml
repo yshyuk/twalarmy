@@ -29,7 +29,7 @@ env:
   SUBNET_NAME: subnet-a                        # Subnet 이름
   TARGET_GROUP: test-group                     # Auto Scaling에서 사용될 대상 그룹 이름
   ASG_NAME_PREFIX: blue-green-setting          # Auto Scaling Group 이름 접두사
-  TARGET_GROUP_NAME: test-group             # Target Group 이름
+  TARGET_GROUP_NAME: test-group                # Target Group 이름
 
 permissions:
   contents: read
@@ -192,17 +192,10 @@ jobs:
           --vpc-zone-identifier $(aws ec2 describe-subnets --filters "Name=tag:Name,Values=${{ env.SUBNET_NAME }}" --query 'Subnets[].SubnetId' --output json | jq -r 'join(",")')\
           --tags ResourceId=$NEW_ASG_NAME,ResourceType=auto-scaling-group,Key=Name,Value=$NEW_ASG_INSTANCE_NAME,PropagateAtLaunch=true
 
-        # 기존의 auto-scaling 그룹을 중단
-        aws autoscaling update-auto-scaling-group \
-          --auto-scaling-group-name ${{ env.BLUE_ASG }} \
-          --min-size 0 \
-          --max-size 0 \
-          --desired-capacity 0
-
     - name: Verify ASG Creation and Instance Naming
       run: |
         echo "Waiting for instances to be created..."
-        sleep 90  # Wait for instances to be created and initialized
+        sleep 240  # Wait for instances to be created and initialized
 
         INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
           --auto-scaling-group-names $NEW_ASG_NAME \
@@ -227,6 +220,13 @@ jobs:
             --targets Id=$ID \
             --query 'TargetHealthDescriptions[0].TargetHealth.State' \
             --output text)
+
+        # 기존의 auto-scaling 그룹을 중단
+        aws autoscaling update-auto-scaling-group \
+          --auto-scaling-group-name ${{ env.BLUE_ASG }} \
+          --min-size 0 \
+          --max-size 0 \
+          --desired-capacity 0
 
         # 중단 후 삭제
         aws autoscaling delete-auto-scaling-group \
