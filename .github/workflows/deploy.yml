@@ -195,7 +195,7 @@ jobs:
     - name: Verify ASG Creation and Instance Naming
       run: |
         echo "Waiting for instances to be created..."
-        sleep 240  # Wait for instances to be created and initialized
+        sleep 1000  # Wait for instances to be created and initialized
 
         INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
           --auto-scaling-group-names $NEW_ASG_NAME \
