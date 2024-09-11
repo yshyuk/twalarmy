@@ -190,13 +190,16 @@ jobs:
           --min-size 1 \
           --max-size 3 \
           --desired-capacity 2 \
-          --target-group-arns $(aws elbv2 describe-target-groups --names ${{ env.TARGET_GROUP }} --query 'TargetGroups[].TargetGroupArn' --output text) \
-          --vpc-zone-identifier $(aws ec2 describe-subnets --filters "Name=tag:Name,Values=${{ env.SUBNET_NAME }}" --query 'Subnets[].SubnetId' --output json | jq -r 'join(",")')\
+          --target-group-arns ${{env.TARGET_GROUP_ARN}} \
+          --health-check-type ELB \
+          --vpc-zone-identifier "subnet-0a724739e7cb8b90f"\
           --tags ResourceId=$NEW_ASG_NAME,ResourceType=auto-scaling-group,Key=Name,Value=$NEW_ASG_INSTANCE_NAME,PropagateAtLaunch=true
 
     - name: Verify ASG Creation and Instance Naming
       run: |
         echo "Waiting for instances in $NEW_ASG_NAME to be created and pass health checks..."
+        
+        echo "NEW_ASG_NAME = ${{env.NEW_ASG_NAME}}"
         
         MAX_WAIT_TIME=900  # 최대 15분 대기
         start_time=$(date +%s)
