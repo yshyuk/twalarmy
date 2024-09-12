@@ -195,24 +195,10 @@ jobs:
           --vpc-zone-identifier "subnet-0a724739e7cb8b90f"\
           --tags ResourceId=$NEW_ASG_NAME,ResourceType=auto-scaling-group,Key=Name,Value=$NEW_ASG_INSTANCE_NAME,PropagateAtLaunch=true
 
-    - name: Verify ASG Creation and Instance Naming
+    - name: Remove ASG from Target Group
       run: |
-
-        sleep 60 
-        
-        # 기존의 auto-scaling 그룹을 중단
-        aws autoscaling update-auto-scaling-group \
+        # Auto Scaling 그룹에서 대상 그룹 분리
+        aws autoscaling detach-load-balancer-target-groups \
           --auto-scaling-group-name ${{ env.BLUE_ASG }} \
-          --min-size 0 \
-          --max-size 0 \
-          --desired-capacity 0
+          --target-group-arns ${{ env.TARGET_GROUP_ARN }}
 
-        # 중단 후 삭제
-        aws autoscaling delete-auto-scaling-group \
-          --auto-scaling-group-name ${{ env.BLUE_ASG }} \
-          --force-delete
-
-        # 기존의 auto-scaling 그룹을 삭제
-        aws autoscaling update-auto-scaling-group \
-          --auto-scaling-group-name $NEW_ASG_NAME \
-          --auto-scaling-group-name ${{ env.BLUE_ASG }}
