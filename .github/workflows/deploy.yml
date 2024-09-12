@@ -197,68 +197,9 @@ jobs:
 
     - name: Verify ASG Creation and Instance Naming
       run: |
-        echo "Waiting for instances in $NEW_ASG_NAME to be created and pass health checks..."
-        
-        echo "NEW_ASG_NAME = ${{env.NEW_ASG_NAME}}"
-        
-        MAX_WAIT_TIME=900  # 최대 15분 대기
-        start_time=$(date +%s)
-        
-        while true; do
-          current_time=$(date +%s)
-          elapsed_time=$((current_time - start_time))
-          
-          if [ $elapsed_time -ge $MAX_WAIT_TIME ]; then
-            echo "Timeout reached. Instances may not be fully initialized."
-            exit 1
-          fi
-          
-          instance_statuses=$(aws autoscaling describe-auto-scaling-groups \
-            --auto-scaling-group-names "$NEW_ASG_NAME" \
-            --query "AutoScalingGroups[0].Instances[*].[InstanceId,HealthStatus,LifecycleState]" \
-            --output text)
-          
-          total_instances=$(echo "$instance_statuses" | wc -l)
-          healthy_instances=$(echo "$instance_statuses" | grep "Healthy" | grep "InService" | wc -l)
-          
-          if [ "$total_instances" -eq "$healthy_instances" ] && [ "$total_instances" -gt 0 ]; then
-            echo "All instances are healthy and in service."
-            break
-          else
-            echo "Waiting for instances to be healthy and in service. Current status: $healthy_instances/$total_instances"
-            sleep 30
-          fi
-        done
-        
-        echo "Instances are ready. Proceeding with the next steps."
-        
-        # 인스턴스 ID 목록 가져오기
-        INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
-          --auto-scaling-group-names "$NEW_ASG_NAME" \
-          --query "AutoScalingGroups[0].Instances[*].InstanceId" \
-          --output text)
-        
-        echo "Instance IDs: $INSTANCE_IDS"
 
-        if [ -z "$INSTANCE_IDS" ]; then
-          echo "Error: No instances found in the Auto Scaling Group"
-          exit 1
-        fi
-
-        for ID in $INSTANCE_IDS; do
-          NAME=$(aws ec2 describe-tags \
-            --filters "Name=resource-id,Values=$ID" "Name=key,Values=Name" \
-            --query "Tags[0].Value" \
-            --output text)
-          echo "Instance $ID has name: $NAME"
-        done
-
-        REGISTERED=$(aws elbv2 describe-target-health \
-            --target-group-arn ${{ env.TARGET_GROUP_ARN }} \
-            --targets Id=$ID \
-            --query 'TargetHealthDescriptions[0].TargetHealth.State' \
-            --output text)
-
+        sleep 60 
+        
         # 기존의 auto-scaling 그룹을 중단
         aws autoscaling update-auto-scaling-group \
           --auto-scaling-group-name ${{ env.BLUE_ASG }} \
